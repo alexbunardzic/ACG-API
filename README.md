@@ -145,8 +145,7 @@ All bindings above live in one file — DiagnosticModule.
 - Runtime: control flows left-to-right. An HTTP request enters through a driving adapter, the driving port is invoked, the application calls out through driven ports, driven adapters do the I/O.
 - Compile time: dependencies flow inward from both sides toward the core. The core doesn't know either side exists — it just publishes port interfaces. That's why swapping StubResponseDrafter for a Claude-backed one changes nothing on the driver side.
 
-
-### ACG API Walking Skeleton Naming the Sides
+**ACG API Walking Skeleton Naming the Sides**
 
 ![ACG API Walking Skeleton Driver-Driven Diagram](https://github.com/alexbunardzic/ACG-API/blob/main/acg-api-walking-skeleton-naming-the-sides.png)
 
