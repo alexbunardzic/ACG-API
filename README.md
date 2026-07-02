@@ -111,3 +111,6 @@ Checkpoints delivered so far:
 2. Domain (`QuestionnaireReply`, `PreliminaryResponse`, value objects, `DomainValidationError`) + application use case.
 3. HTTP controller + in-memory persistence + system adapters + stub drafter, wired via `DiagnosticModule`.
 4. CI-ready + README (this checkpoint).
+
+
+![ACG API Walking Skeleton](https://github.com/alexbunardzic/ACG-API/blob/main/acg-api-walking-skeleton.png)
