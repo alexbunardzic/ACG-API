@@ -1,10 +1,12 @@
+import { DomainValidationError } from './domain-validation.error';
+
 export class QuestionnaireReplyId {
   readonly value: string;
 
   constructor(value: string) {
     const trimmed = value?.trim() ?? '';
     if (trimmed.length === 0) {
-      throw new Error('QuestionnaireReplyId cannot be blank');
+      throw new DomainValidationError('QuestionnaireReplyId cannot be blank');
     }
     this.value = trimmed;
   }

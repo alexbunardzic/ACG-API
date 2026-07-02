@@ -1,4 +1,5 @@
 import { Answer } from './answer';
+import { DomainValidationError } from './domain-validation.error';
 import { QuestionnaireReplyId } from './questionnaire-reply-id';
 
 export interface SubmitQuestionnaireReplyInput {
@@ -20,7 +21,7 @@ export class QuestionnaireReply {
 
   static submit(input: SubmitQuestionnaireReplyInput): QuestionnaireReply {
     if (input.answers.length === 0) {
-      throw new Error('A reply must contain at least one answer');
+      throw new DomainValidationError('A reply must contain at least one answer');
     }
     return new QuestionnaireReply(input);
   }
