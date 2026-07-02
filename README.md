@@ -122,19 +122,26 @@ All bindings above live in one file — DiagnosticModule.
        Swap StubResponseDrafter → ClaudeResponseDrafter there,
        and nothing else in the diagram changes.
 
-** How to read this **
+**How to read this**
 
 - Arrows point in the direction of source-code dependency.
 - The double-lined box is the framework-free core. Everything inside it can be compiled and unit-tested without NestJS, Express, HTTP, or a database.
 - Every outer-ring box (controllers, repositories, drafter, clock, id generator) depends inward on a port; the core never reaches out.
 - DiagnosticModule (not drawn — it lives alongside all this) is the only file that knows about both a port and its adapter simultaneously. That's the composition root.
 
-** What the arch tests actually check — the same arrows, in code: **
+**What the arch tests actually check — the same arrows, in code:**
 
 - No arrow ever crosses from an outer ring back into the core (rules 1–3).
 - No arrow crosses between adapters/in and adapters/out (rules 4–5).
 - No cycles (rule 6).
 - Nothing inside the double-lined box imports @nestjs/*, express, or supertest (rule 7).
 
+### ACG API Walking Skeleton Driver-Driven Diagram
 
+![ACG API Walking Skeleton Driver-Driven Diagram](https://github.com/alexbunardzic/ACG-API/blob/main/acg-api-walking-skeleton-driver-driven.png)
+
+**Reading the diagram**
+
+- Runtime: control flows left-to-right. An HTTP request enters through a driving adapter, the driving port is invoked, the application calls out through driven ports, driven adapters do the I/O.
+- Compile time: dependencies flow inward from both sides toward the core. The core doesn't know either side exists — it just publishes port interfaces. That's why swapping StubResponseDrafter for a Claude-backed one changes nothing on the driver side.
 
