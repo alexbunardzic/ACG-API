@@ -97,9 +97,11 @@ The binding is selected by `responseDrafterFromEnv` (`drafter.factory.ts`) in th
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...     # enables the Claude adapter
-export ACG_DRAFTER_MODEL=claude-sonnet-4-6   # optional override (this is the default)
+export ACG_DRAFTER_MODEL=claude-sonnet-4-6   # optional override (default: claude-haiku-4-5)
 npm run start
 ```
+
+The default model is Haiku (`claude-haiku-4-5`): the draft is short and templated, the endpoint returns it synchronously (so drafting latency is user-facing), and Haiku is roughly 3x cheaper per token than Sonnet ($1/$5 vs $3/$15 per million input/output tokens). If the Diagnostic response later grows into deeper analysis, switching to Sonnet is a one-variable change, no deploy of new code.
 
 Without the key the stub is bound, and under Jest (`NODE_ENV=test`) the stub is **always** bound — so `npm test` stays hermetic and key-free on any machine, exactly as the TDN loop requires.
 

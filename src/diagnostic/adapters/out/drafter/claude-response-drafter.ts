@@ -22,7 +22,7 @@ const SYSTEM_PROMPT = [
 
 export interface ClaudeResponseDrafterOptions {
   apiKey: string;
-  /** Anthropic model id. Defaults to claude-sonnet-4-6. */
+  /** Anthropic model id. Defaults to claude-haiku-4-5. */
   model?: string;
   /** Upper bound on generated tokens. Defaults to 1024. */
   maxTokens?: number;
@@ -59,7 +59,10 @@ export class ClaudeResponseDrafter implements ResponseDrafter {
       throw new Error('ClaudeResponseDrafter requires a non-empty apiKey');
     }
     this.apiKey = options.apiKey;
-    this.model = options.model ?? 'claude-sonnet-4-6';
+    // Haiku by default: the draft is short and templated, the endpoint returns
+    // it synchronously (latency is user-facing), and Haiku is ~3x cheaper per
+    // token than Sonnet. Override via ACG_DRAFTER_MODEL for richer prose.
+    this.model = options.model ?? 'claude-haiku-4-5';
     this.maxTokens = options.maxTokens ?? 1024;
     this.timeoutMs = options.timeoutMs ?? 30_000;
     this.fetchFn = options.fetchFn ?? fetch;

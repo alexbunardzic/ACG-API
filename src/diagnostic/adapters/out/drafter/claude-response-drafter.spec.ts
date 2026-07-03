@@ -53,7 +53,7 @@ describe('ClaudeResponseDrafter', () => {
     expect(headers['anthropic-version']).toBe('2023-06-01');
 
     const body = JSON.parse(String(calls[0].init.body));
-    expect(body.model).toBe('claude-sonnet-4-6');
+    expect(body.model).toBe('claude-haiku-4-5');
     expect(body.max_tokens).toBe(1024);
   });
 
@@ -81,7 +81,7 @@ describe('ClaudeResponseDrafter', () => {
     const { fetchFn, calls } = recordingFetch(anthropicResponse('Body. Reference: reply-42'));
     const drafter = new ClaudeResponseDrafter({
       apiKey: 'test-key',
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       maxTokens: 256,
       fetchFn,
     });
@@ -89,7 +89,7 @@ describe('ClaudeResponseDrafter', () => {
     await drafter.draft(reply);
 
     const body = JSON.parse(String(calls[0].init.body));
-    expect(body.model).toBe('claude-haiku-4-5-20251001');
+    expect(body.model).toBe('claude-sonnet-4-6');
     expect(body.max_tokens).toBe(256);
   });
 
