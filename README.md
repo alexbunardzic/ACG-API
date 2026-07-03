@@ -8,7 +8,7 @@ Built with **Hexagonal Architecture (Ports & Adapters)** and delivered under a *
 
 Walking skeleton. One vertical slice is live end-to-end:
 
-- `POST /questionnaire-reply` — accepts answers to the Diagnostic questionnaire, persists the reply, and returns a preliminary free-text email body produced by a `ResponseDrafter` port. The current adapter is a stub; a Claude-agent adapter will replace it (see [Where the Claude adapter plugs in](#where-the-claude-adapter-plugs-in)).
+- `POST /questionnaire-reply` — accepts answers to the Diagnostic questionnaire, persists the reply, and returns a preliminary free-text email body produced by a `ResponseDrafter` port. Two adapters exist: `StubResponseDrafter` (canned body, always bound under test) and `ClaudeResponseDrafter` (real drafts via the Anthropic API, bound when `ANTHROPIC_API_KEY` is set — see [Where the Claude adapter plugs in](#where-the-claude-adapter-plugs-in)).
 
 ## Requirements
 
@@ -88,14 +88,27 @@ export interface ResponseDrafter {
 }
 ```
 
-The current binding is `StubResponseDrafter` (`src/diagnostic/adapters/out/drafter/stub-response-drafter.ts`), which returns a canned body.
+Two adapters implement it, both under `src/diagnostic/adapters/out/drafter/`:
 
-To swap in a Claude-agent adapter:
+- `StubResponseDrafter` — canned body, no I/O.
+- `ClaudeResponseDrafter` — drafts the email with Claude via the Anthropic Messages API, using the `fetch` built into Node 20+ (no new dependency).
 
-1. Add a new adapter class implementing `ResponseDrafter`, e.g. `ClaudeResponseDrafter`, under `src/diagnostic/adapters/out/drafter/`.
-2. Change the `RESPONSE_DRAFTER` binding in `diagnostic.module.ts` from `StubResponseDrafter` to the new class.
+The binding is selected by `responseDrafterFromEnv` (`drafter.factory.ts`) in the composition root:
 
-No domain, application, or controller code changes. The arch tests and unit tests continue to run against the port; e2e tests exercise the real adapter through the module. This is the payoff of the ports-and-adapters shape.
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...     # enables the Claude adapter
+export ACG_DRAFTER_MODEL=claude-sonnet-4-6   # optional override (this is the default)
+npm run start
+```
+
+Without the key the stub is bound, and under Jest (`NODE_ENV=test`) the stub is **always** bound — so `npm test` stays hermetic and key-free on any machine, exactly as the TDN loop requires.
+
+Two properties of the Claude adapter worth knowing:
+
+- **Untrusted input stays data.** Questionnaire answers are end-user text. The adapter passes them to the model as a fenced JSON payload with a system prompt that forbids treating their content as instructions, so a submitted answer like "ignore previous instructions" is summarised, not obeyed. A unit test pins this boundary.
+- **No secrets in errors.** Provider failures surface as `status + statusText` only; the API key never appears in error messages or logs.
+
+No domain, application, or controller code changed to add the second adapter. The arch tests and unit tests continue to run against the port; e2e tests exercise the module with the stub bound. This is the payoff of the ports-and-adapters shape.
 
 ## TDN loop
 

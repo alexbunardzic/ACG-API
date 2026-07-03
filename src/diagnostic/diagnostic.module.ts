@@ -6,7 +6,7 @@ import { ID_GENERATOR } from './application/ports/out/id-generator.port';
 import { QUESTIONNAIRE_REPLY_REPOSITORY } from './application/ports/out/questionnaire-reply-repository.port';
 import { RESPONSE_DRAFTER } from './application/ports/out/response-drafter.port';
 import { QuestionnaireReplyController } from './adapters/in/http/questionnaire-reply.controller';
-import { StubResponseDrafter } from './adapters/out/drafter/stub-response-drafter';
+import { responseDrafterFromEnv } from './adapters/out/drafter/drafter.factory';
 import { InMemoryQuestionnaireReplyRepository } from './adapters/out/persistence/in-memory-questionnaire-reply.repository';
 import { SystemClock } from './adapters/out/system/system-clock';
 import { UuidIdGenerator } from './adapters/out/system/uuid-id-generator';
@@ -21,7 +21,12 @@ import { UuidIdGenerator } from './adapters/out/system/uuid-id-generator';
     { provide: CLOCK, useClass: SystemClock },
     { provide: ID_GENERATOR, useClass: UuidIdGenerator },
     { provide: QUESTIONNAIRE_REPLY_REPOSITORY, useClass: InMemoryQuestionnaireReplyRepository },
-    { provide: RESPONSE_DRAFTER, useClass: StubResponseDrafter },
+    {
+      // Claude when the environment provides a key (see drafter.factory.ts);
+      // stub otherwise, which keeps `npm test` hermetic and key-free.
+      provide: RESPONSE_DRAFTER,
+      useFactory: () => responseDrafterFromEnv(process.env),
+    },
     {
       provide: SUBMIT_QUESTIONNAIRE_REPLY,
       useFactory: (repo, drafter, clock, ids) =>
