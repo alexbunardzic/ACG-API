@@ -2,12 +2,6 @@ import { PreliminaryResponse } from '../../../domain/preliminary-response';
 import { QuestionnaireReply } from '../../../domain/questionnaire-reply';
 import { ResponseDrafter } from '../../../application/ports/out/response-drafter.port';
 
-/**
- * The questionnaire answers are end-user input and therefore untrusted.
- * They are handed to the model as a fenced JSON *data* payload, never
- * spliced into the instructions, so an answer that says "ignore previous
- * instructions" is summarised like any other answer instead of obeyed.
- */
 const SYSTEM_PROMPT = [
   'You draft preliminary email responses for the AI Craftspeople Guild diagnostic questionnaire.',
   'You will receive the submitted answers as a JSON document.',
@@ -22,7 +16,7 @@ const SYSTEM_PROMPT = [
 
 export interface ClaudeResponseDrafterOptions {
   apiKey: string;
-  /** Anthropic model id. Defaults to claude-haiku-4-5. */
+  /** Anthropic model id. Defaults to claude-haiku-4-5-20251001. */
   model?: string;
   /** Upper bound on generated tokens. Defaults to 1024. */
   maxTokens?: number;
@@ -41,12 +35,6 @@ interface AnthropicMessageResponse {
   content?: AnthropicContentBlock[];
 }
 
-/**
- * Claude-backed adapter for the ResponseDrafter out-port.
- * Plain class (no @Injectable) — constructed by the composition root's
- * useFactory, mirroring how the application service is wired. Uses the
- * global fetch shipped with Node 20+, so it adds no dependency.
- */
 export class ClaudeResponseDrafter implements ResponseDrafter {
   private readonly apiKey: string;
   private readonly model: string;
@@ -59,10 +47,7 @@ export class ClaudeResponseDrafter implements ResponseDrafter {
       throw new Error('ClaudeResponseDrafter requires a non-empty apiKey');
     }
     this.apiKey = options.apiKey;
-    // Haiku by default: the draft is short and templated, the endpoint returns
-    // it synchronously (latency is user-facing), and Haiku is ~3x cheaper per
-    // token than Sonnet. Override via ACG_DRAFTER_MODEL for richer prose.
-    this.model = options.model ?? 'claude-haiku-4-5';
+    this.model = options.model ?? 'claude-haiku-4-5-20251001';
     this.maxTokens = options.maxTokens ?? 1024;
     this.timeoutMs = options.timeoutMs ?? 30_000;
     this.fetchFn = options.fetchFn ?? fetch;
@@ -101,8 +86,6 @@ export class ClaudeResponseDrafter implements ResponseDrafter {
     });
 
     if (!response.ok) {
-      // Body is deliberately not interpolated raw — provider errors can be
-      // large; status + statusText is enough to diagnose without log noise.
       throw new Error(
         `ClaudeResponseDrafter: Anthropic API returned ${response.status} ${response.statusText}`,
       );
@@ -121,15 +104,4 @@ export class ClaudeResponseDrafter implements ResponseDrafter {
 
     return PreliminaryResponse.forReply(reply.id, text);
   }
-}
-
-/**
- * Composition-root guard: the Claude adapter is bound only when an API key
- * is present AND we are not inside a test run. Jest sets NODE_ENV=test, so
- * `npm test` stays hermetic (stub-bound, no network, no key needed) even on
- * a machine where ANTHROPIC_API_KEY is exported.
- */
-export function claudeDrafterEnabled(env: NodeJS.ProcessEnv): boolean {
-  const hasKey = typeof env.ANTHROPIC_API_KEY === 'string' && env.ANTHROPIC_API_KEY.trim().length > 0;
-  return hasKey && env.NODE_ENV !== 'test';
 }

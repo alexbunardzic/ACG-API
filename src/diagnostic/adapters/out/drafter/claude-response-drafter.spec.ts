@@ -1,9 +1,7 @@
 import { Answer } from '../../../domain/answer';
 import { QuestionnaireReply } from '../../../domain/questionnaire-reply';
 import { QuestionnaireReplyId } from '../../../domain/questionnaire-reply-id';
-import { ClaudeResponseDrafter, claudeDrafterEnabled } from './claude-response-drafter';
-import { responseDrafterFromEnv } from './drafter.factory';
-import { StubResponseDrafter } from './stub-response-drafter';
+import { ClaudeResponseDrafter } from './claude-response-drafter';
 
 function replyWith(answers: Array<[string, string]>): QuestionnaireReply {
   return QuestionnaireReply.submit({
@@ -53,7 +51,7 @@ describe('ClaudeResponseDrafter', () => {
     expect(headers['anthropic-version']).toBe('2023-06-01');
 
     const body = JSON.parse(String(calls[0].init.body));
-    expect(body.model).toBe('claude-haiku-4-5');
+    expect(body.model).toBe('claude-haiku-4-5-20251001');
     expect(body.max_tokens).toBe(1024);
   });
 
@@ -114,30 +112,5 @@ describe('ClaudeResponseDrafter', () => {
 
   it('rejects construction without an api key', () => {
     expect(() => new ClaudeResponseDrafter({ apiKey: '' })).toThrow(/non-empty apiKey/);
-  });
-});
-
-describe('claudeDrafterEnabled', () => {
-  it('is enabled only with a key present and outside test runs', () => {
-    expect(claudeDrafterEnabled({ ANTHROPIC_API_KEY: 'k', NODE_ENV: 'production' })).toBe(true);
-    expect(claudeDrafterEnabled({ ANTHROPIC_API_KEY: 'k' })).toBe(true);
-    expect(claudeDrafterEnabled({ ANTHROPIC_API_KEY: 'k', NODE_ENV: 'test' })).toBe(false);
-    expect(claudeDrafterEnabled({ NODE_ENV: 'production' })).toBe(false);
-    expect(claudeDrafterEnabled({ ANTHROPIC_API_KEY: '   ', NODE_ENV: 'production' })).toBe(false);
-  });
-});
-
-describe('responseDrafterFromEnv', () => {
-  it('binds the stub when no key is present or when under test', () => {
-    expect(responseDrafterFromEnv({})).toBeInstanceOf(StubResponseDrafter);
-    expect(responseDrafterFromEnv({ ANTHROPIC_API_KEY: 'k', NODE_ENV: 'test' })).toBeInstanceOf(
-      StubResponseDrafter,
-    );
-  });
-
-  it('binds the Claude adapter when a key is present outside test runs', () => {
-    expect(
-      responseDrafterFromEnv({ ANTHROPIC_API_KEY: 'k', NODE_ENV: 'production' }),
-    ).toBeInstanceOf(ClaudeResponseDrafter);
   });
 });
